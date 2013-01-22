@@ -1,5 +1,5 @@
 desc "Run tests with phantomjs"
-task :test, [:suite] => :dist do |t, args|
+task :test do |t, args|
   require "colored"
 
   unless system("which phantomjs > /dev/null 2>&1")

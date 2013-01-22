@@ -1,6 +1,6 @@
 (function(global, undefined) {
-  if (typeof RegExp !== 'function') {
-    RegExp.escape = unction(s) {
+  if (typeof RegExp.escape !== 'function') {
+    RegExp.escape = function(s) {
       return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
     };
   }
@@ -37,14 +37,14 @@
 
   var strCount = function(str, char) {
     var count = 0, i = 0;
-    while ((i = str.indexOf(char, i)) !== -1) { ++count; }
+    while ((i = str.indexOf(char, i + 1)) !== -1) { ++count; }
     return count;
   };
 
   var CSV = {
     defaults: {
       colSep: ',',
-      rowSep: null,
+      rowSep: "\n",
       quoteChar: '"',
       fieldSizeLimit: null,
       headers: false,
@@ -54,51 +54,42 @@
     parse: function(str, opts) {
       opts = extend({}, this.defaults, opts);
 
-      var csv = [],
-          lines = str.split(opts.rowSep),
-          inExtendedCol = false,
-          line, parts, part;
 
-      if (!lines.length) { return; }
-
-      while (line = lines.shift()) {
-        parts = line.split(opts.colSep);
-
-        if (!parts.length) {
-          if (inExtendedCol) {
-            csv.unshift(opts.colSep);
-          } else {
-            csv.push(null);
-          }
-        }
-
-        while (part = parts.unshift()) {
-          if (part[part.length - 1] === opts.quoteChar && strCount(part, opts.quoteChar) % 2 !== 0) {
-            csv[csv.length - 1]
-          }
-        }
-      }
     },
     stringify: function(csv, opts) {
       opts = extend({}, this.defaults, opts);
 
-      var arr;
+      var rows = [],
+          escQuoteChar = RegExp.escape(opts.quoteChar),
+          escColSep = RegExp.escape(opts.colSep),
+          escRowSep = RegExp.escape(opts.rowSep),
+          reQuoteChar = new RegExp(escQuoteChar, 'g'),
+          reQuoted = new RegExp('(' + [escQuoteChar, escColSep, escRowSep].join('|') + ')');
 
       forEach(csv, function(row, k) {
+        var cols = [];
+
         forEach(row, function(col, i) {
           col = col.toString();
 
-          if (strCount(col, opts.quoteChar) > 0 || opts.forceQuotes) {
-            col = [opts.quoteChar, col, opts.quoteChar].join();
+          if (opts.fieldSizeLimit) {
+            col = col.substr(0, opts.fieldSizeLimit);
           }
 
-          row[i] = col;
+          // Double-quote all occurances of the quote character
+          col = col.replace(reQuoteChar, opts.quoteChar + opts.quoteChar);
+
+          if (opts.forceQuotes || reQuoted.test(col)) {
+            col = [opts.quoteChar, col, opts.quoteChar].join('');
+          }
+
+          cols.push(col);
         });
 
-        arr.push(row.join(opts.colSep));
+        rows.push(cols.join(opts.colSep));
       });
 
-      return arr.join(opts.rowSep);
+      return rows.join(opts.rowSep);
     },
     forEach: function(str, opts, callback) {
       if (typeof opts === 'function') {
