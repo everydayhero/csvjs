@@ -39,66 +39,61 @@
     return str.split(char).length - 1;
   };
 
-  var mapProperties = function(arr, map) {
-    forEach(map, function(prop, i) {
-      if (typeof arr[prop] === 'undefined') {
-        arr[prop] = arr[i];
-      }
-    });
+  var emtpyArray = function(arr) {
+    arr = arr.filter(function(i) { return !!i; });
+    return !arr.length;
   };
 
-  var _converters = {},
-      convert = function(val) {
-        var returnValue = val;
-        forEach(_converters, function(obj) {
-          if (obj.re.test(val)) {
-            returnValue = obj.func(val);
-            return false;
+  var CSVParser = function(opts) {
+    this.opts = extend({}, CSV.defaults, opts);
+    this.headerRow = null;
+  };
+  CSVParser.prototype = {
+    constructor: CSVParser,
+    convert: function(str) {
+      var self = this, returnValue = str;
+
+      if (!self.converters) {
+        self.converters = {};
+        forEach(CSV.converters, function(callback, re) {
+          self.converters[re] = {
+            re: new RegExp(re),
+            func: callback
+          };
+        });
+      }
+
+      forEach(this.converters, function(obj) {
+        if (obj.re.test(str)) {
+          returnValue = obj.func(str);
+          return false;
+        }
+      });
+
+      return returnValue;
+    },
+    mapProperties: function(row) {
+      if (this.headerRow) {
+        forEach(this.headerRow, function(prop, i) {
+          if (typeof row[prop] === 'undefined') {
+            row[prop] = row[i];
           }
         });
-
-        return returnValue;
-      };
-
-  var CSV = {
-    defaults: {
-      colSep: ',',
-      rowSep: "\n",
-      quoteChar: '"',
-      fieldSizeLimit: null,
-      headers: false,
-      skipBlanks: false,
-      forceQuotes: false
-    },
-    converters: {
-      '\\d': function(str) {
-        return str.indexOf('.') !== -1 ? parseFloat(str) : parseInt(str);
-      },
-      '(true|TRUE|false|FALSE)': function(str) {
-        return str.toLowerCase() === 'true';
       }
     },
-    parse: function(str, opts) {
-      opts = extend({}, this.defaults, opts);
-
-      var escColSep = RegExp.escape(opts.colSep),
+    parse: function(str) {
+      var self = this,
+          opts = this.opts,
+          escColSep = RegExp.escape(opts.colSep),
           escRowSep = RegExp.escape(opts.rowSep),
           reColSplitter = new RegExp(['(?=', escColSep, ')'].join(''), 'g'),
           reRowSplitter = new RegExp(['(?=', escRowSep, ')'].join(''), 'g'),
           escQuoteChar = RegExp.escape(opts.quoteChar),
-          reRemoveQuote = new RegExp(['^\s*', escQuoteChar, '([^', escQuoteChar, ']*)', escQuoteChar, '\s*$'].join('')),
+          reRemoveQuote = new RegExp(['^\\s*', escQuoteChar, '([^', escQuoteChar, ']*)', escQuoteChar, '\\s*$'].join('')),
           reRemoveSplitters = new RegExp('^(' + [escColSep, escRowSep].join('|') + ')'),
           reDoubleQuote = new RegExp(escQuoteChar + escQuoteChar, 'g'),
           rows = str.split(reRowSplitter),
-          headerRow = null,
-          arr = [], strBuf = null, colBuf = [];
-
-      forEach(this.converters, function(callback, re) {
-        _converters[re] = {
-          re: new RegExp(re),
-          func: callback
-        };
-      });
+          csv = [], strBuf = null, colBuf = [];
 
       forEach(rows, function(row) {
         var cols = row.split(reColSplitter);
@@ -120,34 +115,37 @@
           // Unescape double-quotes
           strBuf = strBuf.replace(reDoubleQuote, opts.quoteChar);
 
-          colBuf.push(convert(strBuf));
+          if (opts.fieldSizeLimit) {
+            strBuf = strBuf.substr(0, opts.fieldSizeLimit);
+          }
+
+          colBuf.push(self.convert(strBuf));
           strBuf = null;
         });
 
         // Check if buffer has been flushed
         if (strBuf === null) {
-          if (!opts.headers || headerRow) {
-            if (opts.headers && headerRow) {
-              mapProperties(colBuf, headerRow);
+          if (!opts.skipBlanks || !emtpyArray(colBuf)) {
+            if (!opts.headers || self.headerRow) {
+              if (opts.headers) { self.mapProperties(colBuf); }
+              csv.push(colBuf);
+            } else {
+              self.headerRow = colBuf;
             }
-            arr.push(colBuf);
-          } else {
-            headerRow = colBuf;
           }
           colBuf = [];
         }
       });
 
-    if (strBuf !== null) {
-      throw "Malformed CSV data";
-    }
+      if (strBuf !== null) {
+        throw "Malformed CSV data";
+      }
 
-      return arr;
+      return csv;
     },
-    stringify: function(csv, opts) {
-      opts = extend({}, this.defaults, opts);
-
-      var rows = [],
+    stringify: function(csv) {
+      var opts = this.opts,
+          rows = [],
           escQuoteChar = RegExp.escape(opts.quoteChar),
           escColSep = RegExp.escape(opts.colSep),
           escRowSep = RegExp.escape(opts.rowSep),
@@ -166,7 +164,7 @@
 
           // Double-quote all occurances of the quote character
           col = col.replace(reQuoteChar, opts.quoteChar + opts.quoteChar);
-
+          // Quote the field if forced or it contains quote, colume or row splitter characters
           if (opts.forceQuotes || reQuoted.test(col)) {
             col = [opts.quoteChar, col, opts.quoteChar].join('');
           }
@@ -178,17 +176,35 @@
       });
 
       return rows.join(opts.rowSep);
-    },
-    forEach: function(str, opts, callback) {
-      if (typeof opts === 'function') {
-        callback = opts;
-        opts = {};
-      }
+    }
+  };
 
-      var arr = this.parse(str, opts), line;
-      while (line = arr.shift()) {
-        callback(line);
+  var CSV = {
+    defaults: {
+      colSep: ',',
+      rowSep: "\n",
+      quoteChar: '"',
+      fieldSizeLimit: null,
+      headers: false,
+      skipBlanks: false,
+      forceQuotes: false
+    },
+    converters: {
+      '\\d': function(str) {
+        return str.indexOf('.') !== -1 ? parseFloat(str) : parseInt(str);
+      },
+      '(true|TRUE|false|FALSE)': function(str) {
+        return str.toLowerCase() === 'true';
+      },
+      '^(\\s*|NULL)$': function(str) {
+        return null;
       }
+    },
+    parse: function(str, opts) {
+      return new CSVParser(opts).parse(str);
+    },
+    stringify: function(csv, opts) {
+      return new CSVParser(opts).stringify(csv);
     }
   };
 

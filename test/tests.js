@@ -34,33 +34,74 @@ test("unescapes double quotes", function() {
   deepEqual(actual, expected);
 });
 
-test("parse string when column separator is surrounded by quotes", function() {
+test("column separator is surrounded by quotes", function() {
   var expected = [['Joker', 'Psycho,Funny,Deadly']],
       actual = CSV.parse('Joker,"Psycho,Funny,Deadly"');
 
   deepEqual(actual, expected);
 });
 
-test("parse string when row separator is surrounded by quotes", function() {
+test("row separator is surrounded by quotes", function() {
   var expected = [['Joker', 'Psycho\nFunny\nDeadly']],
       actual = CSV.parse('Joker,"Psycho\nFunny\nDeadly"');
 
   deepEqual(actual, expected);
 });
 
-test("skip first row when instructed as header", function() {
+test("`headers` when true will skip first row", function() {
   var expected = [['Batman', 'Gotham City'], ['Superman', 'Metropolis']],
       actual = CSV.parse(STR, {headers: true});
 
   deepEqual(actual, expected);
 });
 
-test("map field names on rows when headers is enabled", function() {
+test("`headers` when true will map field names on rows", function() {
   var csv = CSV.parse(STR, {headers: true}),
       row = csv[0];
 
   equal(row.Name, 'Batman');
   equal(row.Location, 'Gotham City');
+});
+
+test("`fieldSizeLimit` truncates fields that are longer in length", function() {
+  var expected = [['Arkham']],
+      actual = CSV.parse('Arkham Asylum', {fieldSizeLimit: 6});
+
+  deepEqual(actual, expected);
+});
+
+test("`quoteChar` is removed from quoted fields", function() {
+  var expected = [['"Batman"', 'Gotham City']],
+      actual = CSV.parse('"Batman", |Gotham City|', {quoteChar: '|'});
+
+  deepEqual(actual, expected);
+});
+
+test("`quoteChar` is used to unescape double-quotes", function() {
+  var expected = [["Harvey `Two-face` Dent"]],
+      actual = CSV.parse("Harvey ``Two-face`` Dent", {quoteChar: '`'});
+
+  deepEqual(actual, expected);
+});
+
+test("`colSep` is used to separate columns", function() {
+  var expected = [['Batman', 'Gotham City'], ['Superman', 'Metropolis']],
+      actual = CSV.parse("Batman|Gotham City\nSuperman|Metropolis", {colSep: '|'});
+
+  deepEqual(actual, expected);
+});
+
+test("`rowSep` is used to separate columns", function() {
+  var expected = [['Batman', 'Gotham City'], ['Superman', 'Metropolis']],
+      actual = CSV.parse("Batman,Gotham City|Superman,Metropolis", {rowSep: '|'});
+
+  deepEqual(actual, expected);
+});
+
+test("`skipBlanks` ignores empty rows", function() {
+  var expected = [['Batman', 'Gotham City'], ['Superman', 'Metropolis']],
+      actual = CSV.parse("Batman,Gotham City\n, \nSuperman,Metropolis", {skipBlanks: true});
+  deepEqual(actual, expected);
 });
 
 test("throw error when csv is malformed", function() {
@@ -84,6 +125,11 @@ test("real numbers", function() {
 test("booleans", function() {
   deepEqual(CSV.parse("true"), [[true]]);
   deepEqual(CSV.parse("false"), [[false]]);
+});
+
+test("nulls", function() {
+  deepEqual(CSV.parse("foo,,bar"), [['foo', null, 'bar']]);
+  deepEqual(CSV.parse("foo,NULL,bar"), [['foo', null, 'bar']]);
 });
 
 module("CSV stringify", {
