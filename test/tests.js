@@ -63,6 +63,14 @@ test("`headers` when true will map field names on rows", function() {
   equal(row.Location, 'Gotham City');
 });
 
+test("`headers` when true will include headers in the output", function() {
+  var csv = CSV.parse(STR, {headers: true}),
+      expected = ['Name', 'Location'],
+      actual = csv.headers;
+
+  deepEqual(actual, expected);
+});
+
 test("`fieldSizeLimit` truncates fields that are longer in length", function() {
   var expected = [['Arkham']],
       actual = CSV.parse('Arkham Asylum', {fieldSizeLimit: 6});

@@ -1,14 +1,14 @@
-(function(global, undefined) {
+(function(global, VERSION, undefined) {
   if (typeof RegExp.escape !== 'function') {
     RegExp.escape = function(s) {
       return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
     };
   }
 
-  var extend = function(dst) {
+  var extend = function() {
     var args = Array.prototype.slice.call(arguments),
+        dst = args.shift(),
         src, k;
-    args.shift();
 
     while (src = args.shift()) {
       for (k in src) {
@@ -35,8 +35,8 @@
     }
   };
 
-  var strCount = function(str, char) {
-    return str.split(char).length - 1;
+  var strCount = function(str, ch) {
+    return str.split(ch).length - 1;
   };
 
   var emtpyArray = function(arr) {
@@ -141,6 +141,8 @@
         throw "Malformed CSV data";
       }
 
+      csv.headers = this.headerRow;
+
       return csv;
     },
     stringify: function(csv) {
@@ -180,6 +182,7 @@
   };
 
   var CSV = {
+    VERSION: VERSION,
     defaults: {
       colSep: ',',
       rowSep: "\n",
@@ -209,4 +212,4 @@
   };
 
   global.CSV = CSV;
-})(window);
+})(window, '0.0.1');
