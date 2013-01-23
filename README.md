@@ -9,7 +9,7 @@ There are many javascript CSV parsers but they either had dependencies or were d
 
 ## Getting started
 
-1. Download [csv.js](https://raw.github.com/everydayhero/csvjs/master/csv.js)
+1. Download [csv.js](https://raw.github.com/everydayhero/csvjs/master/csv.min.js)
 2. Add it to your HTML file, or where ever you want to use it.
 3. ???
 4. Profit?
