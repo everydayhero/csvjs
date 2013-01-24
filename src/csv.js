@@ -1,7 +1,7 @@
-(function(global, VERSION, undefined) {
+(function(global, undefined) {
   if (typeof RegExp.escape !== 'function') {
     RegExp.escape = function(s) {
-      return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+      return s.replace(/[\-\/\\\^$*+?.()|\[\]{}]/g, '\\$&');
     };
   }
 
@@ -182,7 +182,6 @@
   };
 
   var CSV = {
-    VERSION: VERSION,
     defaults: {
       colSep: ',',
       rowSep: "\n",
@@ -194,7 +193,7 @@
     },
     converters: {
       '\\d': function(str) {
-        return str.indexOf('.') !== -1 ? parseFloat(str) : parseInt(str);
+        return str.indexOf('.') !== -1 ? parseFloat(str) : parseInt(str, 0);
       },
       '(true|TRUE|false|FALSE)': function(str) {
         return str.toLowerCase() === 'true';
@@ -212,4 +211,4 @@
   };
 
   global.CSV = CSV;
-})(window, '0.0.1');
+})(this);

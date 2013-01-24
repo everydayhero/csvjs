@@ -1,0 +1,25 @@
+{
+  "name": "csv",
+  "title": "CSV.js",
+  "preferGlobal": true,
+  "version": "0.0.2",
+  "author": {
+    "name": "Marty Zalega and Everyday Hero",
+    "email": "marty@zalega.me"
+  },
+  "description": "a lightweight csv parser",
+  "main": "./src/csv",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/everydayhero/csvjs.git"
+  },
+  "keywords": [
+    "csv",
+    "parser"
+  ],
+  "analyze": false,
+  "license": "MIT",
+  "engines": {
+    "node": ">=0.6"
+  }
+}
