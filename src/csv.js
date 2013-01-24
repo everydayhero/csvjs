@@ -53,19 +53,10 @@
     convert: function(str) {
       var self = this, returnValue = str;
 
-      if (!self.converters) {
-        self.converters = {};
-        forEach(CSV.converters, function(callback, re) {
-          self.converters[re] = {
-            re: new RegExp(re),
-            func: callback
-          };
-        });
-      }
-
-      forEach(this.converters, function(obj) {
-        if (obj.re.test(str)) {
-          returnValue = obj.func(str);
+      forEach(CSV.converters, function(func) {
+        var ret = func(str);
+        if (typeof ret !== 'undefined') {
+          returnValue = ret;
           return false;
         }
       });
@@ -191,17 +182,32 @@
       skipBlanks: false,
       forceQuotes: false
     },
-    converters: {
-      '\\d': function(str) {
-        return str.indexOf('.') !== -1 ? parseFloat(str) : parseInt(str, 0);
+    converters: [
+      function(str) {
+        if (/^[\+\-]?\d+(\,\d+)*(\.\d+)?$/.test(str)) {
+          str = str.replace(',', '');
+          return str.indexOf('.') !== -1 ? parseFloat(str) : parseInt(str, 0);
+        }
       },
-      '(true|TRUE|false|FALSE)': function(str) {
-        return str.toLowerCase() === 'true';
+      function(str) {
+        str = str.toLowerCase();
+        if (str === 'true' || str === 'false') {
+          return str === 'true';
+        }
       },
-      '^(\\s*|NULL)$': function(str) {
-        return null;
+      function(str) {
+        if (/^(\s*|null)$/i.test(str)) {
+          return null;
+        }
+      },
+      function(str) {
+        var date = Date.parse(str);
+
+        if (/^\d{4}([\-\/]\d{2}){2}/.test(str) && !isNaN(date)) {
+          return new Date(date);
+        }
       }
-    },
+    ],
     parse: function(str, opts) {
       return new CSVParser(opts).parse(str);
     },

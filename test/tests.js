@@ -121,23 +121,41 @@ test("throw error when csv is malformed", function() {
 module("CSV converters");
 
 test("fixed numbers", function() {
-  deepEqual(CSV.parse("123"), [[123]]);
-  deepEqual(CSV.parse("-123"), [[-123]]);
+  deepEqual(CSV.parse('123'), [[123]]);
+  deepEqual(CSV.parse('-123'), [[-123]]);
+  deepEqual(CSV.parse('+123'), [[123]]);
+  deepEqual(CSV.parse('abc123'), [['abc123']]);
 });
 
 test("real numbers", function() {
-  deepEqual(CSV.parse("123.12"), [[123.12]]);
-  deepEqual(CSV.parse("-123.12"), [[-123.12]]);
+  deepEqual(CSV.parse('123.12'), [[123.12]]);
+  deepEqual(CSV.parse('+123.12'), [[123.12]]);
+  deepEqual(CSV.parse('-123.12'), [[-123.12]]);
+  deepEqual(CSV.parse('"1,234.12"'), [[1234.12]]);
+  deepEqual(CSV.parse('"+1,234.12"'), [[1234.12]]);
+  deepEqual(CSV.parse('"-1,234.12"'), [[-1234.12]]);
+  deepEqual(CSV.parse('"abc1,234.12"'), [['abc1,234.12']]);
 });
 
 test("booleans", function() {
-  deepEqual(CSV.parse("true"), [[true]]);
-  deepEqual(CSV.parse("false"), [[false]]);
+  deepEqual(CSV.parse('true'), [[true]]);
+  deepEqual(CSV.parse('TRUE'), [[true]]);
+  deepEqual(CSV.parse('false'), [[false]]);
+  deepEqual(CSV.parse('FALSE'), [[false]]);
 });
 
 test("nulls", function() {
-  deepEqual(CSV.parse("foo,,bar"), [['foo', null, 'bar']]);
-  deepEqual(CSV.parse("foo,NULL,bar"), [['foo', null, 'bar']]);
+  deepEqual(CSV.parse('foo,,bar'), [['foo', null, 'bar']]);
+  deepEqual(CSV.parse('foo,NULL,bar'), [['foo', null, 'bar']]);
+  deepEqual(CSV.parse('foo,null,bar'), [['foo', null, 'bar']]);
+});
+
+test("dates", function() {
+  deepEqual(CSV.parse('2013 01 23'), [['2013 01 23']]);
+  deepEqual(CSV.parse('2013-01-23T20:26:13.123Z'), [[new Date(2013, 0, 24, 6, 26, 13, 123)]]);
+  // The follow test passes in Chrome but not Node :S
+  // deepEqual(CSV.parse('2013-01-23'), [[new Date(Date.UTC(2013, 0, 23))]]);
+  deepEqual(CSV.parse('2013/01/23'), [[new Date(2013, 0, 23)]]);
 });
 
 module("CSV stringify", {

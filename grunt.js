@@ -47,7 +47,7 @@ module.exports = function(grunt) {
         eqnull: true
       },
       globals: {}
-    },
+    }
   });
 
   // Default task.
