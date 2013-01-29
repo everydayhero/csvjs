@@ -176,6 +176,13 @@ test("serialize an array", function() {
   equal(actual, expected);
 });
 
+test("serializes null", function() {
+  equal(CSV.stringify([['foo', null, 'bar']]), "foo,,bar");
+  equal(CSV.stringify([['foo', undefined, 'bar']]), "foo,,bar");
+  equal(CSV.stringify([['foo', false, 'bar']]), "foo,false,bar");
+  equal(CSV.stringify([['foo', 0, 'bar']]), "foo,0,bar");
+});
+
 test("`forceQuote` quotes all fields", function() {
   var expected = "\"Name\",\"Location\"\n\"Batman\",\"Gotham City\"\n\"Superman\",\"Metropolis\"",
       actual = CSV.stringify(ARRAY, {forceQuotes: true});

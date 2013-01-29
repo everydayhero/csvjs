@@ -150,6 +150,7 @@
         var cols = [];
 
         forEach(row, function(col, i) {
+          if (col === null || col === undefined) { col = ''; }
           col = col.toString();
 
           if (opts.fieldSizeLimit) {
