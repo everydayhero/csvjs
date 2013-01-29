@@ -20,6 +20,13 @@ test("parses a string", function() {
   deepEqual(actual, expected);
 });
 
+test("converts return carriage characters to new line", function() {
+  var expected = ARRAY,
+      actual = CSV.parse("Name,Location\rBatman,Gotham City\rSuperman,Metropolis");
+
+  deepEqual(actual, expected);
+});
+
 test("unescapes quotes", function() {
   var expected = ARRAY,
       actual = CSV.parse("Name,Location\nBatman,\"Gotham City\"\nSuperman,Metropolis");

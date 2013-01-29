@@ -83,8 +83,9 @@
           reRemoveQuote = new RegExp(['^\\s*', escQuoteChar, '([^', escQuoteChar, ']*)', escQuoteChar, '\\s*$'].join('')),
           reRemoveSplitters = new RegExp('^(' + [escColSep, escRowSep].join('|') + ')'),
           reDoubleQuote = new RegExp(escQuoteChar + escQuoteChar, 'g'),
-          rows = str.split(reRowSplitter),
-          csv = [], strBuf = null, colBuf = [];
+          csv = [], strBuf = null, colBuf = [], rows;
+
+      rows = str.replace(/\r/g, '\n').split(reRowSplitter);
 
       forEach(rows, function(row) {
         var cols = row.split(reColSplitter);
