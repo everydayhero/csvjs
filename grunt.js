@@ -6,7 +6,7 @@ module.exports = function(grunt) {
     pkg: '<json:package.json>',
     meta: {
       banner: '// ==========================================================================\n' +
-              '// Project:   <%= pkg.title || pkg.name %>\n' +
+              '// Project:   <%= pkg.title || pkg.name %> <%= pkg.version %>\n' +
               '// Copyright: ©<%= grunt.template.today("yyyy") %> <%= pkg.author.name %>\n' +
               '//            See https://raw.github.com/everydayhero/csvjs/master/LICENSE\n' +
               '// =========================================================================='
